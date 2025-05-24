@@ -24,7 +24,6 @@ const CopyTradeSettings = ({ walletData, isLoading }: CopyTradeSettingsProps) =>
   const [isProcessing, setIsProcessing] = useState(false);
   const [settings, setSettings] = useState({
     isActive: walletData.isActive,
-    traderAddress: "",
     allocatedCapital: 1
   });
   
@@ -42,7 +41,6 @@ const CopyTradeSettings = ({ walletData, isLoading }: CopyTradeSettingsProps) =>
         if (data) {
           setSettings({
             isActive: data.is_active,
-            traderAddress: data.trader_address,
             allocatedCapital: data.allocated_capital_sol
           });
         }
@@ -57,16 +55,6 @@ const CopyTradeSettings = ({ walletData, isLoading }: CopyTradeSettingsProps) =>
   const handleSaveSettings = async () => {
     try {
       setIsProcessing(true);
-      
-      // Validate trader address
-      if (!settings.traderAddress.trim()) {
-        toast({
-          title: "Invalid address",
-          description: "Please enter a valid trader address",
-          variant: "destructive"
-        });
-        return;
-      }
       
       // Get current user ID
       const userId = (await supabase.auth.getUser()).data.user?.id;
@@ -92,7 +80,6 @@ const CopyTradeSettings = ({ walletData, isLoading }: CopyTradeSettingsProps) =>
           .from('copy_settings')
           .update({
             is_active: settings.isActive,
-            trader_address: settings.traderAddress,
             allocated_capital_sol: settings.allocatedCapital,
             updated_at: new Date().toISOString()
           })
@@ -106,7 +93,6 @@ const CopyTradeSettings = ({ walletData, isLoading }: CopyTradeSettingsProps) =>
           .insert({
             user_id: userId,
             is_active: settings.isActive,
-            trader_address: settings.traderAddress,
             allocated_capital_sol: settings.allocatedCapital
           });
           
@@ -179,32 +165,21 @@ const CopyTradeSettings = ({ walletData, isLoading }: CopyTradeSettingsProps) =>
           )}
         </div>
         
-        <div className="space-y-2">
-          <Label htmlFor="trader-address" className="text-white">Trader Address</Label>
-          <Input 
-            id="trader-address"
-            placeholder="Enter the trader's wallet address"
-            className="bg-black/40 border-gray-700 text-white"
-            value={settings.traderAddress}
-            onChange={(e) => setSettings({...settings, traderAddress: e.target.value})}
-          />
-          <p className="text-gray-400 text-xs">
-            This is the address of the Master Trader whose trades you want to copy
-          </p>
-        </div>
+
         
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label className="text-white">Allocated Capital (SOL)</Label>
-            <span className="text-white font-medium">{settings.allocatedCapital} SOL</span>
+            <Label htmlFor="allocated-capital" className="text-white">Allocated Capital (SOL)</Label>
           </div>
-          <Slider 
-            value={[settings.allocatedCapital]}
+          <Input 
+            id="allocated-capital"
+            type="number"
+            placeholder="Enter amount in SOL"
+            className="bg-black/40 border-gray-700 text-white"
+            value={settings.allocatedCapital}
+            onChange={(e) => setSettings({...settings, allocatedCapital: parseFloat(e.target.value) || 0})}
             min={0.1}
-            max={10}
-            step={0.1}
-            onValueChange={(value) => setSettings({...settings, allocatedCapital: value[0]})}
-            className="py-4"
+            step="0.1"
           />
           <p className="text-gray-400 text-xs">
             This determines the size of your copy trades relative to the Master Trader
