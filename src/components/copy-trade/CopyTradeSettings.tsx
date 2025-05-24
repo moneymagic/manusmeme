@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Slider } from "@/components/ui/slider";
-import { RefreshCw, Save } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { RefreshCw, Save, Wallet, Copy, AlertCircle } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
+import QRCode from 'qrcode.react';
 
 interface CopyTradeSettingsProps {
   walletData: {
@@ -22,6 +23,7 @@ interface CopyTradeSettingsProps {
 const CopyTradeSettings = ({ walletData, isLoading }: CopyTradeSettingsProps) => {
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showFundsModal, setShowFundsModal] = useState(false);
   const [settings, setSettings] = useState({
     isActive: walletData.isActive,
     allocatedCapital: 1
@@ -52,6 +54,14 @@ const CopyTradeSettings = ({ walletData, isLoading }: CopyTradeSettingsProps) =>
     fetchSettings();
   }, []);
   
+  const handleCopyAddress = () => {
+    navigator.clipboard.writeText(walletData.depositAddress);
+    toast({
+      title: "Endereço copiado!",
+      description: "Endereço de depósito copiado para a área de transferência"
+    });
+  };
+
   const handleSaveSettings = async () => {
     try {
       setIsProcessing(true);
@@ -61,8 +71,8 @@ const CopyTradeSettings = ({ walletData, isLoading }: CopyTradeSettingsProps) =>
       
       if (!userId) {
         toast({
-          title: "Authentication error",
-          description: "Please log in to save settings",
+          title: "Erro de autenticação",
+          description: "Por favor, faça login para salvar as configurações",
           variant: "destructive"
         });
         return;
@@ -100,17 +110,17 @@ const CopyTradeSettings = ({ walletData, isLoading }: CopyTradeSettingsProps) =>
       }
       
       toast({
-        title: "Settings saved!",
+        title: "Configurações salvas!",
         description: settings.isActive 
-          ? "Your copy trading is now active" 
-          : "Copy trading has been paused"
+          ? "Seu copy trading está ativo agora" 
+          : "Copy trading foi pausado"
       });
       
     } catch (error) {
       console.error("Error saving settings:", error);
       toast({
-        title: "Failed to save settings",
-        description: "Please try again later",
+        title: "Falha ao salvar configurações",
+        description: "Por favor, tente novamente mais tarde",
         variant: "destructive"
       });
     } finally {
@@ -133,85 +143,162 @@ const CopyTradeSettings = ({ walletData, isLoading }: CopyTradeSettingsProps) =>
   const lowBalanceWarning = walletData.balance < 0.05;
   
   return (
-    <Card className="bg-black/30 border-white/10 backdrop-blur-sm">
-      <CardHeader>
-        <CardTitle className="text-white">Copy Trading Settings</CardTitle>
-        <CardDescription className="text-gray-400">
-          Configure your copy trading parameters
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="copy-active" className="text-white text-lg">Trading Status</Label>
-              <p className="text-gray-400 text-sm">Enable or disable copy trading</p>
+    <>
+      <Dialog open={showFundsModal} onOpenChange={setShowFundsModal}>
+        <DialogContent className="bg-black/80 border-white/10 backdrop-blur-sm text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-white text-xl">Adicionar Fundos</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Envie SOL para o endereço abaixo para financiar sua carteira de copy trading
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="bg-black/40 rounded-lg p-4">
+              <p className="text-gray-400 text-sm">Saldo Disponível</p>
+              <p className="text-white text-3xl font-bold">{walletData.balance} SOL</p>
+              <div className="flex items-center mt-2">
+                <div className={`w-3 h-3 rounded-full mr-2 ${
+                  walletData.balance > 0.05 ? 'bg-green-500' : 'bg-red-500'
+                }`}></div>
+                <p className={`text-sm ${
+                  walletData.balance > 0.05 ? 'text-green-500' : 'text-red-500'
+                }`}>
+                  {walletData.balance > 0.05 
+                    ? 'Saldo suficiente para copy trading' 
+                    : 'Saldo baixo! Adicione pelo menos 0.05 SOL'}
+                </p>
+              </div>
             </div>
-            <Switch 
-              id="copy-active"
-              checked={settings.isActive}
-              onCheckedChange={(checked) => setSettings({...settings, isActive: checked})}
-              disabled={lowBalanceWarning}
-              className={lowBalanceWarning ? "cursor-not-allowed opacity-50" : ""}
-            />
+            
+            <div className="bg-black/40 rounded-lg p-4 border border-gray-800">
+              <p className="text-gray-400 text-sm mb-2">Seu Endereço de Depósito</p>
+              <div className="flex items-center justify-between">
+                <p className="text-white text-sm font-mono truncate">{walletData.depositAddress}</p>
+                <Button variant="ghost" size="sm" onClick={handleCopyAddress}>
+                  <Copy className="h-4 w-4 text-gray-400" />
+                </Button>
+              </div>
+              <div className="flex justify-center my-4">
+                <div className="bg-white p-2 rounded">
+                  <QRCode value={walletData.depositAddress} size={150} />
+                </div>
+              </div>
+              <div className="bg-blue-900/30 border border-blue-500/20 rounded-lg p-3 mt-2">
+                <div className="flex items-start">
+                  <AlertCircle className="h-5 w-5 text-blue-400 mr-2 mt-0.5 flex-shrink-0" />
+                  <p className="text-blue-300 text-sm">
+                    Envie apenas SOL para este endereço. Não envie outros tokens ou eles podem ser perdidos.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
           
-          {lowBalanceWarning && (
-            <div className="bg-red-900/30 border border-red-500/20 rounded-lg p-3 mt-2">
-              <p className="text-red-300 text-sm">
-                Insufficient balance! Add at least 0.05 SOL to enable copy trading.
-              </p>
+          <Button 
+            onClick={() => setShowFundsModal(false)}
+            className="w-full bg-blue-600 hover:bg-blue-700"
+          >
+            Fechar
+          </Button>
+        </DialogContent>
+      </Dialog>
+      
+      <Card className="bg-black/30 border-white/10 backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle className="text-white">Copy Trading Settings</CardTitle>
+          <CardDescription className="text-gray-400">
+            Configure your copy trading parameters
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="bg-black/40 rounded-lg p-4 mb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-400 text-sm">Saldo Disponível</p>
+                <p className="text-white text-xl font-bold">{walletData.balance} SOL</p>
+              </div>
+              <Button 
+                onClick={() => setShowFundsModal(true)}
+                className="bg-green-600 hover:bg-green-700"
+                size="sm"
+              >
+                <Wallet className="h-4 w-4 mr-2" />
+                Adicionar Fundos
+              </Button>
             </div>
-          )}
-        </div>
-        
-
-        
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="allocated-capital" className="text-white">Allocated Capital (SOL)</Label>
           </div>
-          <Input 
-            id="allocated-capital"
-            type="number"
-            placeholder="Enter amount in SOL"
-            className="bg-black/40 border-gray-700 text-white"
-            value={settings.allocatedCapital}
-            onChange={(e) => setSettings({...settings, allocatedCapital: parseFloat(e.target.value) || 0})}
-            min={0.1}
-            step="0.1"
-          />
-          <p className="text-gray-400 text-xs">
-            This determines the size of your copy trades relative to the Master Trader
-          </p>
-        </div>
-        
-        <div className="space-y-2">
-          <div className="bg-blue-900/30 border border-blue-500/20 rounded-lg p-4">
-            <h4 className="text-blue-300 font-medium mb-2">Performance Fee Structure</h4>
-            <p className="text-gray-300 text-sm">30% of profit is deducted from your gas fee wallet:</p>
-            <ul className="list-disc list-inside text-gray-300 text-sm pl-2 space-y-1 mt-1">
-              <li>10% goes to Master Trader</li>
-              <li>20% goes to the affiliate network</li>
-            </ul>
+          
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="copy-active" className="text-white text-lg">Trading Status</Label>
+                <p className="text-gray-400 text-sm">Enable or disable copy trading</p>
+              </div>
+              <Switch 
+                id="copy-active"
+                checked={settings.isActive}
+                onCheckedChange={(checked) => setSettings({...settings, isActive: checked})}
+                disabled={lowBalanceWarning}
+                className={lowBalanceWarning ? "cursor-not-allowed opacity-50" : ""}
+              />
+            </div>
+            
+            {lowBalanceWarning && (
+              <div className="bg-red-900/30 border border-red-500/20 rounded-lg p-3 mt-2">
+                <p className="text-red-300 text-sm">
+                  Saldo insuficiente! Adicione pelo menos 0.05 SOL para ativar o copy trading.
+                </p>
+              </div>
+            )}
           </div>
-        </div>
-      </CardContent>
-      <CardFooter>
-        <Button 
-          onClick={handleSaveSettings}
-          disabled={isProcessing || lowBalanceWarning}
-          className="w-full bg-blue-600 hover:bg-blue-700"
-        >
-          {isProcessing ? (
-            <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-          ) : (
-            <Save className="h-4 w-4 mr-2" />
-          )}
-          Save Settings
-        </Button>
-      </CardFooter>
-    </Card>
+          
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="allocated-capital" className="text-white">Allocated Capital (SOL)</Label>
+            </div>
+            <Input 
+              id="allocated-capital"
+              type="number"
+              placeholder="Enter amount in SOL"
+              className="bg-black/40 border-gray-700 text-white"
+              value={settings.allocatedCapital}
+              onChange={(e) => setSettings({...settings, allocatedCapital: parseFloat(e.target.value) || 0})}
+              min={0.1}
+              step="0.1"
+            />
+            <p className="text-gray-400 text-xs">
+              This determines the size of your copy trades relative to the Master Trader
+            </p>
+          </div>
+          
+          <div className="space-y-2">
+            <div className="bg-blue-900/30 border border-blue-500/20 rounded-lg p-4">
+              <h4 className="text-blue-300 font-medium mb-2">Performance Fee Structure</h4>
+              <p className="text-gray-300 text-sm">30% of profit is deducted from your gas fee wallet:</p>
+              <ul className="list-disc list-inside text-gray-300 text-sm pl-2 space-y-1 mt-1">
+                <li>10% goes to Master Trader</li>
+                <li>20% goes to the affiliate network</li>
+              </ul>
+            </div>
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button 
+            onClick={handleSaveSettings}
+            disabled={isProcessing || lowBalanceWarning}
+            className="w-full bg-blue-600 hover:bg-blue-700"
+          >
+            {isProcessing ? (
+              <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <Save className="h-4 w-4 mr-2" />
+            )}
+            Save Settings
+          </Button>
+        </CardFooter>
+      </Card>
+    </>
   );
 };
 

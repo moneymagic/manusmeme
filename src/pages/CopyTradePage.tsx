@@ -68,11 +68,8 @@ const CopyTradePage = () => {
         <div className="container mx-auto px-6 py-4">
           <h1 className="text-3xl font-bold text-white mb-6">Copy Trading</h1>
           
-          <Tabs defaultValue="wallet" className="w-full" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid grid-cols-3 mb-8 bg-black/30">
-              <TabsTrigger value="wallet" className="text-white data-[state=active]:bg-blue-600">
-                Wallet
-              </TabsTrigger>
+          <Tabs defaultValue="settings" className="w-full" value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid grid-cols-2 mb-8 bg-black/30">
               <TabsTrigger value="settings" className="text-white data-[state=active]:bg-blue-600">
                 Settings
               </TabsTrigger>
@@ -80,10 +77,6 @@ const CopyTradePage = () => {
                 Trade History
               </TabsTrigger>
             </TabsList>
-            
-            <TabsContent value="wallet">
-              <CopyTradeWallet walletData={walletData} isLoading={isLoading} />
-            </TabsContent>
             
             <TabsContent value="settings">
               <CopyTradeSettings walletData={walletData} isLoading={isLoading} />
