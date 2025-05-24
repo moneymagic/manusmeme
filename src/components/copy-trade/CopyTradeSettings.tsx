@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,9 +6,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { RefreshCw, Save, Wallet, Copy, AlertCircle } from 'lucide-react';
+import { RefreshCw, Save, Wallet, ExternalLink } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
-import QRCode from 'qrcode.react';
+
+// Simulação da integração com Solana Web3
+// Em um ambiente real, importaríamos:
+// import { useWallet } from '@solana/wallet-adapter-react';
+// import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
+
+// Constantes para simulação
+const CONTRACT_ADDRESS = "5xyzAb123..."; // Endereço do contrato simulado
+const SOLANA_EXPLORER_URL = "https://explorer.solana.com/tx";
 
 interface CopyTradeSettingsProps {
   walletData: {
@@ -24,10 +31,18 @@ const CopyTradeSettings = ({ walletData, isLoading }: CopyTradeSettingsProps) =>
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   const [showFundsModal, setShowFundsModal] = useState(false);
+  const [depositAmount, setDepositAmount] = useState(1.0);
+  const [transactionStatus, setTransactionStatus] = useState<'idle' | 'pending' | 'success' | 'error'>('idle');
+  const [transactionHash, setTransactionHash] = useState<string | null>(null);
   const [settings, setSettings] = useState({
     isActive: walletData.isActive,
     allocatedCapital: 1
   });
+  
+  // Simulação do hook useWallet do Solana
+  // Em um ambiente real, usaríamos:
+  // const { publicKey, sendTransaction } = useWallet();
+  const walletConnected = true; // Simulando carteira conectada
   
   useEffect(() => {
     const fetchSettings = async () => {
@@ -53,13 +68,80 @@ const CopyTradeSettings = ({ walletData, isLoading }: CopyTradeSettingsProps) =>
     
     fetchSettings();
   }, []);
-  
-  const handleCopyAddress = () => {
-    navigator.clipboard.writeText(walletData.depositAddress);
-    toast({
-      title: "Endereço copiado!",
-      description: "Endereço de depósito copiado para a área de transferência"
-    });
+
+  // Simulação de transação Solana
+  const handleDeposit = async () => {
+    if (!walletConnected) {
+      toast({
+        title: "Carteira não conectada",
+        description: "Por favor, conecte sua carteira para continuar",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (depositAmount <= 0) {
+      toast({
+        title: "Valor inválido",
+        description: "Por favor, insira um valor maior que zero",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+    setTransactionStatus('pending');
+    
+    try {
+      // Simulação de transação
+      // Em um ambiente real, faríamos:
+      /*
+      const transaction = new Transaction().add(
+        SystemProgram.transfer({
+          fromPubkey: publicKey,
+          toPubkey: new PublicKey(CONTRACT_ADDRESS),
+          lamports: LAMPORTS_PER_SOL * depositAmount
+        })
+      );
+      
+      const signature = await sendTransaction(transaction, connection);
+      const confirmation = await connection.confirmTransaction(signature);
+      */
+      
+      // Simulando tempo de processamento da blockchain
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Simulando hash de transação
+      const mockTxHash = "3xR9t2dnbLmHQKLECDk1r4vCkPGGBQXPARHCJw8rWBFKKKuoV4zcnUW7WPo9JB4EFSKfYPVcivxz1Bp";
+      setTransactionHash(mockTxHash);
+      setTransactionStatus('success');
+      
+      // Atualizar saldo (simulado)
+      // Em um ambiente real, buscaríamos o novo saldo
+      
+      toast({
+        title: "Depósito realizado com sucesso!",
+        description: `${depositAmount} SOL adicionados à sua carteira de copy trading`,
+      });
+      
+      // Fechar modal após sucesso
+      setTimeout(() => {
+        setShowFundsModal(false);
+        setTransactionStatus('idle');
+        setTransactionHash(null);
+      }, 3000);
+      
+    } catch (error) {
+      console.error("Erro ao processar depósito:", error);
+      setTransactionStatus('error');
+      toast({
+        title: "Falha no depósito",
+        description: "Ocorreu um erro ao processar sua transação",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleSaveSettings = async () => {
@@ -149,7 +231,7 @@ const CopyTradeSettings = ({ walletData, isLoading }: CopyTradeSettingsProps) =>
           <DialogHeader>
             <DialogTitle className="text-white text-xl">Adicionar Fundos</DialogTitle>
             <DialogDescription className="text-gray-400">
-              Envie SOL para o endereço abaixo para financiar sua carteira de copy trading
+              Deposite SOL diretamente da sua carteira conectada
             </DialogDescription>
           </DialogHeader>
           
@@ -171,36 +253,129 @@ const CopyTradeSettings = ({ walletData, isLoading }: CopyTradeSettingsProps) =>
               </div>
             </div>
             
-            <div className="bg-black/40 rounded-lg p-4 border border-gray-800">
-              <p className="text-gray-400 text-sm mb-2">Seu Endereço de Depósito</p>
-              <div className="flex items-center justify-between">
-                <p className="text-white text-sm font-mono truncate">{walletData.depositAddress}</p>
-                <Button variant="ghost" size="sm" onClick={handleCopyAddress}>
-                  <Copy className="h-4 w-4 text-gray-400" />
-                </Button>
-              </div>
-              <div className="flex justify-center my-4">
-                <div className="bg-white p-2 rounded">
-                  <QRCode value={walletData.depositAddress} size={150} />
+            {transactionStatus === 'idle' && (
+              <div className="bg-black/40 rounded-lg p-4 border border-gray-800">
+                <Label htmlFor="deposit-amount" className="text-white mb-2 block">Valor a Depositar (SOL)</Label>
+                <div className="flex items-center space-x-2">
+                  <Input 
+                    id="deposit-amount"
+                    type="number"
+                    placeholder="1.0"
+                    className="bg-black/40 border-gray-700 text-white"
+                    value={depositAmount}
+                    onChange={(e) => setDepositAmount(parseFloat(e.target.value) || 0)}
+                    min={0.1}
+                    step="0.1"
+                  />
+                  <span className="text-white font-medium">SOL</span>
                 </div>
+                <p className="text-gray-400 text-xs mt-2">
+                  Taxa estimada: ~0.000005 SOL
+                </p>
               </div>
-              <div className="bg-blue-900/30 border border-blue-500/20 rounded-lg p-3 mt-2">
-                <div className="flex items-start">
-                  <AlertCircle className="h-5 w-5 text-blue-400 mr-2 mt-0.5 flex-shrink-0" />
-                  <p className="text-blue-300 text-sm">
-                    Envie apenas SOL para este endereço. Não envie outros tokens ou eles podem ser perdidos.
+            )}
+            
+            {transactionStatus === 'pending' && (
+              <div className="bg-blue-900/30 border border-blue-500/20 rounded-lg p-6">
+                <div className="flex flex-col items-center justify-center">
+                  <RefreshCw className="animate-spin text-blue-400 h-10 w-10 mb-4" />
+                  <p className="text-blue-300 text-center">
+                    Processando transação...
+                    <br />
+                    <span className="text-sm text-blue-400">Confirme na sua carteira</span>
                   </p>
                 </div>
               </div>
-            </div>
+            )}
+            
+            {transactionStatus === 'success' && transactionHash && (
+              <div className="bg-green-900/30 border border-green-500/20 rounded-lg p-6">
+                <div className="flex flex-col items-center justify-center">
+                  <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <p className="text-green-300 text-center mb-2">
+                    Transação confirmada!
+                  </p>
+                  <a 
+                    href={`${SOLANA_EXPLORER_URL}/${transactionHash}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-sm text-green-400 flex items-center hover:underline"
+                  >
+                    Ver no Solana Explorer
+                    <ExternalLink className="h-3 w-3 ml-1" />
+                  </a>
+                </div>
+              </div>
+            )}
+            
+            {transactionStatus === 'error' && (
+              <div className="bg-red-900/30 border border-red-500/20 rounded-lg p-6">
+                <div className="flex flex-col items-center justify-center">
+                  <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </div>
+                  <p className="text-red-300 text-center">
+                    Falha na transação
+                    <br />
+                    <span className="text-sm text-red-400">Por favor, tente novamente</span>
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
           
-          <Button 
-            onClick={() => setShowFundsModal(false)}
-            className="w-full bg-blue-600 hover:bg-blue-700"
-          >
-            Fechar
-          </Button>
+          <div className="flex space-x-2">
+            <Button 
+              onClick={() => {
+                setShowFundsModal(false);
+                setTransactionStatus('idle');
+                setTransactionHash(null);
+              }}
+              variant="outline"
+              className="flex-1 border-gray-700 text-white hover:bg-gray-800"
+              disabled={isProcessing}
+            >
+              Cancelar
+            </Button>
+            
+            {transactionStatus === 'idle' && (
+              <Button 
+                onClick={handleDeposit}
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                disabled={isProcessing || depositAmount <= 0}
+              >
+                Confirmar
+              </Button>
+            )}
+            
+            {transactionStatus === 'success' && (
+              <Button 
+                onClick={() => {
+                  setShowFundsModal(false);
+                  setTransactionStatus('idle');
+                  setTransactionHash(null);
+                }}
+                className="flex-1 bg-green-600 hover:bg-green-700"
+              >
+                Concluir
+              </Button>
+            )}
+            
+            {transactionStatus === 'error' && (
+              <Button 
+                onClick={() => setTransactionStatus('idle')}
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+              >
+                Tentar Novamente
+              </Button>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
       
