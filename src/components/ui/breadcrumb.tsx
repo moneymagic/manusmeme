@@ -1,83 +1,69 @@
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 
-interface BreadcrumbProps extends React.HTMLAttributes<HTMLElement> {
-  children: React.ReactNode;
+interface BreadcrumbProps {
   className?: string;
 }
 
-const Breadcrumb = React.forwardRef<HTMLElement, BreadcrumbProps>(
-  ({ className, children, ...props }, ref) => {
-    return (
-      <nav
-        ref={ref}
-        aria-label="breadcrumb"
-        className={`flex items-center text-sm ${className || ''}`}
-        {...props}
-      >
-        <ol className="flex items-center space-x-2">{children}</ol>
-      </nav>
-    );
+const Breadcrumb: React.FC<BreadcrumbProps> = ({ className = '' }) => {
+  const location = useLocation();
+  const pathSegments = location.pathname.split('/').filter(segment => segment);
+  
+  // Format path segment to be more readable
+  const formatSegment = (segment: string) => {
+    // Convert kebab-case or snake_case to Title Case with spaces
+    return segment
+      .replace(/-|_/g, ' ')
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+  
+  // Generate breadcrumb items
+  const breadcrumbItems = [
+    { name: 'Home', path: '/' },
+    ...pathSegments.map((segment, index) => {
+      const path = `/${pathSegments.slice(0, index + 1).join('/')}`;
+      return {
+        name: formatSegment(segment),
+        path
+      };
+    })
+  ];
+  
+  if (breadcrumbItems.length <= 1) {
+    return null; // Don't show breadcrumbs on home page
   }
-);
-Breadcrumb.displayName = "Breadcrumb";
+  
+  return (
+    <nav className={`premium-fade-in py-4 ${className}`} aria-label="Breadcrumb">
+      <ol className="flex items-center flex-wrap">
+        {breadcrumbItems.map((item, index) => {
+          const isLast = index === breadcrumbItems.length - 1;
+          
+          return (
+            <li key={item.path} className="flex items-center">
+              {index > 0 && (
+                <ChevronRight className="h-4 w-4 mx-2 text-gray-400" />
+              )}
+              
+              {isLast ? (
+                <span className="text-white font-medium">{item.name}</span>
+              ) : (
+                <a 
+                  href={item.path}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  {item.name}
+                </a>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
+};
 
-interface BreadcrumbItemProps extends React.HTMLAttributes<HTMLLIElement> {
-  children: React.ReactNode;
-}
-
-const BreadcrumbItem = React.forwardRef<HTMLLIElement, BreadcrumbItemProps>(
-  ({ className, children, ...props }, ref) => {
-    return (
-      <li
-        ref={ref}
-        className={`flex items-center ${className || ''}`}
-        {...props}
-      >
-        {children}
-      </li>
-    );
-  }
-);
-BreadcrumbItem.displayName = "BreadcrumbItem";
-
-interface BreadcrumbLinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
-  children: React.ReactNode;
-  asChild?: boolean;
-}
-
-const BreadcrumbLink = React.forwardRef<HTMLAnchorElement, BreadcrumbLinkProps>(
-  ({ className, children, asChild = false, ...props }, ref) => {
-    return (
-      <a
-        ref={ref}
-        className={`hover:underline ${className || ''}`}
-        {...props}
-      >
-        {children}
-      </a>
-    );
-  }
-);
-BreadcrumbLink.displayName = "BreadcrumbLink";
-
-interface BreadcrumbSeparatorProps extends React.HTMLAttributes<HTMLSpanElement> {
-  children?: React.ReactNode;
-}
-
-const BreadcrumbSeparator = React.forwardRef<HTMLSpanElement, BreadcrumbSeparatorProps>(
-  ({ className, children, ...props }, ref) => {
-    return (
-      <span
-        ref={ref}
-        className={`mx-2 ${className || ''}`}
-        {...props}
-      >
-        {children || <ChevronRight className="h-4 w-4" />}
-      </span>
-    );
-  }
-);
-BreadcrumbSeparator.displayName = "BreadcrumbSeparator";
-
-export { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator };
+export default Breadcrumb;

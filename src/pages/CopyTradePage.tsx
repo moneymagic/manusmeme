@@ -1,94 +1,65 @@
-
-import React, { useState, useEffect } from 'react';
-import { useToast } from "@/hooks/use-toast";
-import Layout from "@/components/Layout";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import CopyTradeWallet from "@/components/copy-trade/CopyTradeWallet";
 import CopyTradeSettings from "@/components/copy-trade/CopyTradeSettings";
 import CopyTradeHistory from "@/components/copy-trade/CopyTradeHistory";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 const CopyTradePage = () => {
-  const [activeTab, setActiveTab] = useState("wallet");
-  const [walletData, setWalletData] = useState<{
-    balance: number;
-    depositAddress: string;
-    isActive: boolean;
-  }>({
+  const [isLoading, setIsLoading] = useState(true);
+  const [walletData, setWalletData] = useState({
     balance: 0,
     depositAddress: "",
     isActive: false
   });
-  const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
   
   useEffect(() => {
     const fetchWalletData = async () => {
       try {
         setIsLoading(true);
         
-        // Get user wallet data
-        const { data: walletData, error: walletError } = await supabase
-          .from('wallets')
-          .select('*')
-          .single();
-          
-        if (walletError) throw walletError;
+        // Simulação de chamada à API
+        // Em um ambiente real, buscaríamos dados da carteira do usuário
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // Get copy settings
-        const { data: settingsData, error: settingsError } = await supabase
-          .from('copy_settings')
-          .select('is_active')
-          .maybeSingle();
-          
+        // Dados simulados
         setWalletData({
-          balance: walletData?.balance_sol || 0,
-          depositAddress: walletData?.deposit_address || "Address not available",
-          isActive: settingsData?.is_active || false
+          balance: 0.25,
+          depositAddress: "5xyzAb123...",
+          isActive: true
         });
       } catch (error) {
         console.error("Error fetching wallet data:", error);
-        toast({
-          title: "Failed to load wallet data",
-          description: "Please try again later",
-          variant: "destructive",
-        });
       } finally {
         setIsLoading(false);
       }
     };
     
     fetchWalletData();
-  }, [toast]);
+  }, []);
   
   return (
-    <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 pt-8">
-        <div className="container mx-auto px-6 py-4">
-          <h1 className="text-3xl font-bold text-white mb-6">Copy Trading</h1>
-          
-          <Tabs defaultValue="settings" className="w-full" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid grid-cols-2 mb-8 bg-black/30">
-              <TabsTrigger value="settings" className="text-white data-[state=active]:bg-blue-600">
-                Settings
-              </TabsTrigger>
-              <TabsTrigger value="history" className="text-white data-[state=active]:bg-blue-600">
-                Trade History
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="settings">
-              <CopyTradeSettings walletData={walletData} isLoading={isLoading} />
-            </TabsContent>
-            
-            <TabsContent value="history">
-              <CopyTradeHistory isLoading={isLoading} />
-            </TabsContent>
-          </Tabs>
-        </div>
+    <div className="premium-fade-in py-6">
+      <div className="mb-8">
+        <h1 className="h1">Copy Trading</h1>
+        <p className="caption mt-2">Configure and monitor your copy trading settings</p>
       </div>
-    </Layout>
+      
+      <Tabs defaultValue="settings" className="w-full">
+        <TabsList className="premium-tabs mb-6">
+          <TabsTrigger value="settings" className="premium-tab">Settings</TabsTrigger>
+          <TabsTrigger value="history" className="premium-tab">Trade History</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="settings">
+          <CopyTradeSettings walletData={walletData} isLoading={isLoading} />
+        </TabsContent>
+        
+        <TabsContent value="history">
+          <CopyTradeHistory />
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 
