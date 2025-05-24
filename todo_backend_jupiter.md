@@ -1,0 +1,21 @@
+# Lista de Tarefas - Integração Jupiter e Preparação para Produção
+
+- [x] Analisar função `distribute-commission` (Supabase).
+- [x] Analisar `CopyTradeExecutor.ts` e `TradeProcessorService.ts`.
+- [x] Pesquisar e documentar API Jupiter Swap (`/quote`, `/swap`, `/swap-instructions`).
+- [x] Criar plano de integração Jupiter (`jupiter_integration_plan.md`).
+- [x] Implementar `JupiterService.ts` com chamadas para `/quote` e `/swap`.
+- [x] Integrar `JupiterService.ts` no `TradeProcessorService.ts`.
+- [ ] Refinar lógica de cálculo proporcional do valor do seguidor e tokens de entrada/saída para o swap Jupiter.
+- [ ] Implementar busca real de uplines em `getUserUplines` (substituir mock).
+- [ ] Implementar persistência da distribuição de comissões (atualizar saldos dos uplines/plataforma).
+- [ ] Implementar lógica de confirmação de transação Solana pós-envio.
+- [ ] Implementar cálculo de lucro real baseado nos dados da transação confirmada.
+- [ ] Definir e implementar estratégia de assinatura de transação (requer decisão de arquitetura/segurança - provavelmente via frontend).
+- [ ] Adicionar tratamento de erro robusto para chamadas de API e fluxo de transação.
+- [ ] Testar integração Jupiter em devnet (até o ponto de gerar a transação serializada).
+- [ ] Preparar variáveis de ambiente para produção (ex: RPC URL, chaves Supabase Service Role).
+- [ ] Realizar build otimizado do frontend (`npm run build`).
+- [ ] Realizar testes finais ponta-a-ponta (simulados onde necessário).
+- [ ] Documentar arquitetura final, fluxo de dados e passos para deploy.
+- [ ] Reportar status final e arquivos ao usuário.

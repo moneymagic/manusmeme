@@ -1,0 +1,23 @@
+[package]
+name = "memeflow_contract"
+version = "0.1.0"
+description = "Created with Anchor"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "memeflow_contract"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = { version = "0.29.0", features = ["init-if-needed"] } # Enable init-if-needed feature
+anchor-spl = "0.29.0"
+# Jupiter CPI dependency removed temporarily due to version conflicts
+# jupiter-cpi = { version = "3.0.0", features = ["cpi"] }
+

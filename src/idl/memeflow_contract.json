@@ -1,0 +1,212 @@
+{
+  "version": "0.1.0",
+  "name": "memeflow_contract",
+  "instructions": [
+    {
+      "name": "initialize",
+      "accounts": [
+        {
+          "name": "platformConfig",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "adminAuthority",
+          "type": "publicKey"
+        },
+        {
+          "name": "swapExecutorAuthority",
+          "type": "publicKey"
+        },
+        {
+          "name": "jupiterProgramId",
+          "type": "publicKey"
+        }
+      ]
+    },
+    {
+      "name": "updateConfig",
+      "accounts": [
+        {
+          "name": "platformConfig",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "admin",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "newAdminAuthority",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "newSwapExecutorAuthority",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "newJupiterProgramId",
+          "type": {
+            "option": "publicKey"
+          }
+        }
+      ]
+    },
+    {
+      "name": "delegateAuthority",
+      "accounts": [
+        {
+          "name": "delegatedAuthority",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "user",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "platformConfig",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "revokeAuthority",
+      "accounts": [
+        {
+          "name": "delegatedAuthority",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "user",
+          "isMut": true,
+          "isSigner": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "executeSwap",
+      "accounts": [
+        {
+          "name": "platformConfig",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "swapExecutor",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "delegatedAuthority",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "inputAmount",
+          "type": "u64"
+        },
+        {
+          "name": "minimumOutputAmount",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "PlatformConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "adminAuthority",
+            "type": "publicKey"
+          },
+          {
+            "name": "swapExecutorAuthority",
+            "type": "publicKey"
+          },
+          {
+            "name": "jupiterProgramId",
+            "type": "publicKey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DelegatedAuthority",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "publicKey"
+          },
+          {
+            "name": "isActive",
+            "type": "bool"
+          },
+          {
+            "name": "allowedSwapAuthority",
+            "type": "publicKey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "Unauthorized",
+      "msg": "Unauthorized action."
+    },
+    {
+      "code": 6001,
+      "name": "DelegationInactive",
+      "msg": "Delegation is not active."
+    }
+  ],
+  "metadata": {
+    "address": "HX3Ex4icMLJFwqSDJ9vsLe87ZNd7UyrBxPiUHj78rKLm"
+  }
+}
